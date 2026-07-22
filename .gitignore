@@ -14,3 +14,6 @@ frontend/.env.local
 # 系统
 .DS_Store
 Thumbs.db
+
+# 大模型权重（体积大，不入库；缺失时自动降级为 OpenCV 软抠图，可从 HuggingFace 下载）
+backend/assets/models/

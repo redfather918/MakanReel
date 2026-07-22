@@ -29,6 +29,7 @@ class Template(BaseModel):
     hook_duration: float = 2.5
     transition: str = "fade"
     logo_position: str = "top-right"
+    background: str = ""  # Phase 2.1 背景风格（空串时使用 config 默认）
     style_prompt: str = ""
 
 

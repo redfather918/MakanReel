@@ -101,7 +101,9 @@ def _concat_segments(seg_paths: list[str], transition: str, out_path: str, fps: 
     list_file = out_path + ".txt"
     with open(list_file, "w", encoding="utf-8") as f:
         for p in seg_paths:
-            f.write(f"file '{p.replace(chr(92), '/')}'\n")
+            # 用绝对路径 + 正斜杠，避免 Windows 下 FFmpeg concat 相对路径解析混乱
+            safe = Path(p).resolve().as_posix()
+            f.write(f"file '{safe}'\n")
     cmd = [
         FFMPEG, "-y", "-f", "concat", "-safe", "0", "-i", list_file,
         "-c", "copy", out_path,

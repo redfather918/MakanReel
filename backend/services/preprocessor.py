@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image, ImageOps
 
 import config
+from services import matting
 
 # 人脸检测级联（OpenCV 4.x 可用；5.0 已移除 Haar API，此时降级为 None）
 _FACE_CASCADE: cv2.CascadeClassifier | None = None
@@ -206,9 +207,15 @@ def _load_image_bgr(path: str) -> np.ndarray:
     return arr
 
 
-def process_image(path: str, out_path: str, idx: int) -> str:
-    """处理单张图片：裁切 9:16 + 画质修复 → 保存 1080x1920 JPEG。"""
+def process_image(path: str, out_path: str, idx: int, background: str | None = None) -> str:
+    """处理单张图片：抠图换背景 → 裁切 9:16 + 画质修复 → 保存 1080x1920 JPEG。
+
+    background: 指定品牌背景风格（None 时用 config.BACKGROUND_DEFAULT_STYLE）。
+    config.BACKGROUND_REPLACEMENT 关闭时跳过换背景。
+    """
     bgr = _load_image_bgr(path)
+    if config.BACKGROUND_REPLACEMENT:
+        bgr = matting.remove_bg_to_background(bgr, background)
     cropped = smart_crop_9_16(bgr, config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT)
     enhanced = enhance(cropped)
     cv2.imwrite(out_path, enhanced, [cv2.IMWRITE_JPEG_QUALITY, 92])
@@ -252,10 +259,12 @@ def process_video(path: str, out_dir: str, max_seconds: int = 5) -> list[str]:
     return results
 
 
-def process_all(asset_paths: list[tuple[str, str]], out_dir: str) -> list[str]:
+def process_all(asset_paths: list[tuple[str, str]], out_dir: str,
+                background: str | None = None) -> list[str]:
     """处理所有素材。
 
     asset_paths: [(type, path), ...]  type 为 'image' 或 'video'
+    background: 背景替换风格（仅图片生效；空/None 用 config 默认）。
     返回处理后图片路径列表（统一为 1080x1920 JPEG）。
     """
     processed: list[str] = []
@@ -267,7 +276,7 @@ def process_all(asset_paths: list[tuple[str, str]], out_dir: str) -> list[str]:
             idx += len(frames)
         else:
             out_path = os.path.join(out_dir, f"img_{idx}.jpg")
-            process_image(path, out_path, idx)
+            process_image(path, out_path, idx, background)
             processed.append(out_path)
             idx += 1
     return processed

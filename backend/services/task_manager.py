@@ -122,7 +122,7 @@ async def run_pipeline(job_id: str, template_id: str | None) -> None:
         # 1. 预处理
         asset_paths = [(a.type, a.orig_path) for a in job.assets]
         processed = await asyncio.to_thread(
-            preprocessor.process_all, asset_paths, str(proc_dir)
+            preprocessor.process_all, asset_paths, str(proc_dir), tpl.background
         )
         job.processed = processed
         _update(job, stage="preprocessing", progress=40)

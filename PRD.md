@@ -130,7 +130,7 @@
 | 3.1 上传端 | 备注文本框 | ✅ 已实现 | 极简备注输入 |
 | 3.2 智能裁切 | YOLOv8/Vision API 主体识别 + 9:16 裁切 | ✅ 功能达成 | 以 OpenCV 谱残差显著性 + 人脸检测降级实现主体聚焦（未引入 YOLO/SAM，但达成"关键要素不被切掉"目标） |
 | 3.2 画质修复 | 提饱和/透亮/对比度 + 去噪 | ✅ 已实现 | CLAHE + 非局部去噪 + 色彩增强 |
-| 3.2 背景替换 | 抠图换品牌背景（可选保底） | ❌ 未实现 | Phase 1 未做抠图/背景替换；列为 Phase 2 候选 |
+| 3.2 背景替换 | 抠图换品牌背景（可选保底） | ✅ 已实现（Phase 2.1） | 用 RMBG-1.4 ONNX 轻量 matting 替代 SAM；支持 summer_cool / neon_night / minimal_brand 三套品牌背景；模板可指定 background；默认开启且不增加门店操作步数 |
 | 3.3 模板库 | 8–10 套 5–15s 卡点模板 | ✅ 已实现 | 8 套模板（summer_cool / night_vibe / ken_burns / zoom_in / flash / slide 等），时长 3.5–8s |
 | 3.3 转场/BGM | 转场 + Beat detection 卡点音乐 | ⚠️ 部分实现 | 转场 + 程序化合成 BGM（numpy→WAV）；**未做**节拍检测，音轨为程序生成而非曲库 |
 | 3.3 品牌 Logo | 水纹/Logo 统一位置 | ✅ 已实现（Phase 2.1） | 角标自动挂载已完成（top-right/bottom-right，90% 透明）；Endcard 动画为增强项 |
@@ -150,7 +150,7 @@
 
 **图例**：✅ 已实现 ｜ ⚠️ 部分实现（功能达标但有简化/差异） ｜ ❌ 未实现（列入后续规划）
 
-**Phase 1 小结**：核心闭环（极简上传 ➔ AI 一键生成 ➔ 预览/下载/复制文案/换风格）已完整跑通；与原始草案的主要差异为——视觉层以 OpenCV 替代 YOLO/SAM、存储用本地文件系统替代 S3、BGM 程序化合成替代曲库 Beat detection、暂未实现背景替换与品牌 Logo 挂载。这些均属 Phase 1 合理简化，不影响核心体验，已在 TRD 风险对策中说明。
+**Phase 1 小结**：核心闭环（极简上传 ➔ AI 一键生成 ➔ 预览/下载/复制文案/换风格）已完整跑通；与原始草案的主要差异为——视觉层以 OpenCV 替代 YOLO/SAM、存储用本地文件系统替代 S3、BGM 程序化合成替代曲库 Beat detection、背景替换与品牌 Logo 挂载已在 Phase 2.1 落地。这些均属 Phase 1 合理简化，不影响核心体验，已在 TRD 风险对策中说明。
 
 ---
 
@@ -185,7 +185,7 @@ Phase 1 为快速验证闭环，在视觉与音频上做了轻量化（程序化
 | 品牌 Logo 角标自动挂载 | 模板按 `logo_position` 在右上角/右下角叠加半透明品牌 Logo（默认 90% 透明、15% 宽、4% 边距）；Logo 图与策略后台可配（`GET/POST /api/brand`） | ❌ 3.3 品牌 Logo | ✅ **Phase 2.1 已落地**（2026-07-23）：`backend/assets/logo.png` 内置 MakanReel 字标，渲染器 `_overlay_logo` 接入 |
 | 品牌 Endcard 动画（结尾 1s） | 视频结尾 1 秒弹出品牌 Endcard 动画 | — | ⏳ 规划中（角标已覆盖主诉求，Endcard 为增强项） |
 | 品牌 VI 风格约束 | 后台配置指定字体（Fonts）、品牌色盘（Brand Colors）、贴纸（Stickers），确保 180+ 门店视觉高度统一 | ❌ 未做 VI 约束 | ⏳ 规划中 |
-| 智能抠图与背景替换 (Matting & BG Replacement) | 引入 Segment Anything (SAM) 或 lightweight matting 模型；店长后厨/前台随手拍时，一键提取奶茶主体，替换为清凉夏日 / 霓虹夜店 / 极简品牌背景 | ❌ 3.2 背景替换 |
+| 智能抠图与背景替换 (Matting & BG Replacement) | 引入 Segment Anything (SAM) 或 lightweight matting 模型；店长后厨/前台随手拍时，一键提取奶茶主体，替换为清凉夏日 / 霓虹夜店 / 极简品牌背景 | ❌ 3.2 背景替换 | ✅ **Phase 2.1 已落地**（2026-07-23）：RMBG-1.4 ONNX 轻量 matting + 3 套品牌背景（summer_cool / neon_night / minimal_brand），预处理流水线接入；模型缺失时降级 OpenCV 显著性软抠图 |
 
 #### 7.1.2 音频与节拍引擎升级 (Audio & Beat Matching)
 
