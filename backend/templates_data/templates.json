@@ -1,0 +1,132 @@
+[
+  {
+    "id": "summer_cool",
+    "name": "夏日酷炫",
+    "duration": 8.0,
+    "bgm": "summer_cool.mp3",
+    "segments": [
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null},
+      {"duration": 2.0, "effect": "ken_burns", "overlay_text": null},
+      {"duration": 2.0, "effect": "flash", "overlay_text": null},
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "MUST TRY!",
+    "hook_duration": 2.5,
+    "transition": "fade",
+    "logo_position": "top-right",
+    "style_prompt": "夏日酷爽风格，活力、清凉、吸引眼球"
+  },
+  {
+    "id": "zoom_in",
+    "name": "高质感 Zoom-In",
+    "duration": 6.0,
+    "bgm": "zoom_in.mp3",
+    "segments": [
+      {"duration": 3.0, "effect": "zoom_in", "overlay_text": null},
+      {"duration": 3.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "FRESH & DELICIOUS",
+    "hook_duration": 2.0,
+    "transition": "zoompan",
+    "logo_position": "bottom-right",
+    "style_prompt": "高质感、精致、慢动作特写风格"
+  },
+  {
+    "id": "promo_flash",
+    "name": "促销快闪",
+    "duration": 5.0,
+    "bgm": "promo_flash.mp3",
+    "segments": [
+      {"duration": 1.0, "effect": "flash", "overlay_text": null},
+      {"duration": 1.0, "effect": "flash", "overlay_text": null},
+      {"duration": 1.0, "effect": "flash", "overlay_text": null},
+      {"duration": 1.0, "effect": "flash", "overlay_text": null},
+      {"duration": 1.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "BUY 1 FREE 1!",
+    "hook_duration": 2.0,
+    "transition": "wipeleft",
+    "logo_position": "top-right",
+    "style_prompt": "促销快闪风格，紧迫感、大字、高能量"
+  },
+  {
+    "id": "ken_burns",
+    "name": "静态微动",
+    "duration": 7.0,
+    "bgm": "ken_burns.mp3",
+    "segments": [
+      {"duration": 7.0, "effect": "ken_burns", "overlay_text": null}
+    ],
+    "hook_text": "SO SHIOK!",
+    "hook_duration": 2.5,
+    "transition": "fade",
+    "logo_position": "bottom-right",
+    "style_prompt": "电影感缓慢拉近，营造氛围与品质感"
+  },
+  {
+    "id": "fresh_pop",
+    "name": "清新气泡",
+    "duration": 8.0,
+    "bgm": "fresh_pop.mp3",
+    "segments": [
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null},
+      {"duration": 2.0, "effect": "ken_burns", "overlay_text": null},
+      {"duration": 2.0, "effect": "slide", "overlay_text": null},
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "REFRESHING!",
+    "hook_duration": 2.5,
+    "transition": "slideleft",
+    "logo_position": "top-right",
+    "style_prompt": "清新、明亮、气泡感、年轻活力"
+  },
+  {
+    "id": "night_vibe",
+    "name": "夜间氛围",
+    "duration": 7.0,
+    "bgm": "night_vibe.mp3",
+    "segments": [
+      {"duration": 3.5, "effect": "ken_burns", "overlay_text": null},
+      {"duration": 3.5, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "NIGHT MOOD",
+    "hook_duration": 2.0,
+    "transition": "fade",
+    "logo_position": "bottom-right",
+    "style_prompt": "夜间氛围，霓虹、暗调、高级感"
+  },
+  {
+    "id": "sweet_zoom",
+    "name": "甜蜜聚焦",
+    "duration": 6.0,
+    "bgm": "sweet_zoom.mp3",
+    "segments": [
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null},
+      {"duration": 2.0, "effect": "ken_burns", "overlay_text": null},
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "SWEET TOOTH!",
+    "hook_duration": 2.0,
+    "transition": "circleopen",
+    "logo_position": "top-right",
+    "style_prompt": "甜蜜、温暖、诱人甜品风格"
+  },
+  {
+    "id": "energy_burst",
+    "name": "能量爆发",
+    "duration": 8.0,
+    "bgm": "energy_burst.mp3",
+    "segments": [
+      {"duration": 1.5, "effect": "flash", "overlay_text": null},
+      {"duration": 1.5, "effect": "zoom_in", "overlay_text": null},
+      {"duration": 1.5, "effect": "flash", "overlay_text": null},
+      {"duration": 1.5, "effect": "slide", "overlay_text": null},
+      {"duration": 2.0, "effect": "zoom_in", "overlay_text": null}
+    ],
+    "hook_text": "LIMITED TIME!",
+    "hook_duration": 2.0,
+    "transition": "wiperight",
+    "logo_position": "top-right",
+    "style_prompt": "高能量爆发，节奏快、冲击力强"
+  }
+]
