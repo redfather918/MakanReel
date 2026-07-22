@@ -1,7 +1,7 @@
 """智能抠图与背景替换（Phase 2.1 Matting & BG Replacement）。
 
 优先用 RMBG-1.4 ONNX 模型推理前景 alpha，合成到品牌背景；
-模型不可用时降级为 OpenCV 谱残差显著性软抠图，保证功能始终可用。
+模型不可用时降级为 OpenCV GrabCut 分割，保证无模型也能出可用效果。
 """
 from __future__ import annotations
 
@@ -17,14 +17,14 @@ _SESSION_ERROR = False
 
 
 def _get_session():
-    """惰性加载 RMBG-1.4 ONNX 推理会话；失败/缺失则降级返回 None。"""
+    """惰性加载 RMBG-1.4 ONNX 推理会话；失败/缺失则降级返回 None，走 GrabCut。"""
     global _SESSION, _SESSION_ERROR
     if _SESSION is not None:
         return _SESSION
     if _SESSION_ERROR:
         return None
     if not os.path.exists(config.BG_MODEL_PATH):
-        print(f"[matting] 模型不存在 {config.BG_MODEL_PATH}，降级显著性软抠图")
+        print(f"[matting] 模型不存在 {config.BG_MODEL_PATH}，降级 GrabCut 软抠图（建议运行 download_model.py 下载 RMBG-1.4）")
         _SESSION_ERROR = True
         return None
     try:
@@ -39,7 +39,7 @@ def _get_session():
         print("[matting] ONNX 模型加载成功")
         return _SESSION
     except Exception as e:  # pragma: no cover - 依赖/权重异常
-        print(f"[matting] ONNX 加载失败，降级: {e}")
+        print(f"[matting] ONNX 加载失败，降级 GrabCut: {e}")
         _SESSION_ERROR = True
         return None
 
@@ -63,36 +63,30 @@ def _infer_alpha(session, img_rgb: np.ndarray) -> np.ndarray:
     return alpha
 
 
-def _saliency_alpha(img_bgr: np.ndarray) -> np.ndarray:
-    """OpenCV 谱残差显著性兜底：生成前景 alpha（无 ONNX 时使用）。
+def _grabcut_alpha(img_bgr: np.ndarray) -> np.ndarray:
+    """GrabCut 兜底：无 ONNX 模型时，用中心矩形初始化做前景分割。
 
-    流程：显著性图 → Otsu 二值化 → 形态学清理 → 放大羽化。
-    效果弱于 RMBG，但模型缺失时仍能保留主体并替换背景。
+    假设产品大致居中；效果弱于 RMBG，但远优于纯显著性阈值，
+    能在无模型时提供可用的背景替换。
     """
     h, w = img_bgr.shape[:2]
-    small = cv2.resize(img_bgr, (64, 64), interpolation=cv2.INTER_AREA)
-    gray = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    gray -= gray.mean()
-    fft = np.fft.fft2(gray)
-    mag = np.abs(fft)
-    phase = np.angle(fft)
-    log_mag = np.log(mag + 1e-8)
-    avg = cv2.boxFilter(log_mag, -1, (3, 3))
-    residual = log_mag - avg
-    sal = np.abs(np.fft.ifft2(np.exp(residual) * np.exp(1j * phase))) ** 2
-    sal = (sal - sal.min()) / (sal.max() - sal.min() + 1e-8)
-    sal = cv2.GaussianBlur(sal, (9, 9), 0)
+    mask = np.zeros((h, w), np.uint8)
+    # 初始化矩形：中心 70% 区域为可能前景
+    margin_x, margin_y = int(w * 0.15), int(h * 0.15)
+    rect = (margin_x, margin_y, w - 2 * margin_x, h - 2 * margin_y)
+    bgd_model = np.zeros((1, 65), np.float64)
+    fgd_model = np.zeros((1, 65), np.float64)
+    try:
+        cv2.grabCut(img_bgr, mask, rect, bgd_model, fgd_model, iterCount=5,
+                    mode=cv2.GC_INIT_WITH_RECT)
+    except Exception as e:  # pragma: no cover
+        print(f"[matting] GrabCut 失败: {e}")
+        return np.full((h, w), 255, np.uint8)
 
-    # Otsu 二值化 + 形态学清理（去噪 + 填洞）
-    sal_u8 = (sal * 255).astype(np.uint8)
-    _, mask = cv2.threshold(sal_u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=2)
-
-    # 放大并羽化边缘
-    alpha = cv2.resize(mask, (w, h), interpolation=cv2.INTER_LINEAR)
-    alpha = cv2.GaussianBlur(alpha, (0, 0), sigmaX=8)
+    # 0=背景, 1=前景, 2=可能背景, 3=可能前景
+    alpha = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype(np.uint8)
+    # 轻微羽化，减少硬边
+    alpha = cv2.GaussianBlur(alpha, (0, 0), sigmaX=5)
     return alpha
 
 
@@ -148,7 +142,7 @@ def remove_bg_to_background(img_bgr: np.ndarray, style: str | None = None) -> np
         rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         alpha = _infer_alpha(session, rgb)
     else:
-        alpha = _saliency_alpha(img_bgr)
+        alpha = _grabcut_alpha(img_bgr)
 
     bg = _load_background(style, h, w)
     return _composite(img_bgr, alpha, bg)
