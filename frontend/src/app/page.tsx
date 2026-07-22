@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Uploader from "@/components/Uploader";
 import ProgressView from "@/components/ProgressView";
 import ResultView from "@/components/ResultView";
-import { uploadAssets, generate, getJob, JobStatus } from "@/lib/api";
+import {
+  uploadAssets,
+  generate,
+  getJob,
+  JobStatus,
+  assetUrl,
+  apiUrl,
+} from "@/lib/api";
 
 type Phase = "upload" | "processing" | "done" | "failed";
 
@@ -14,12 +21,21 @@ export default function Home() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [job, setJob] = useState<JobStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [brandLogo, setBrandLogo] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
+  }, []);
+
+  useEffect(() => {
+    // 拉取品牌配置，若已配置 Logo 则在顶栏展示（Phase 2.1）
+    fetch(apiUrl("/brand"))
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => d?.logo_url && setBrandLogo(d.logo_url))
+      .catch(() => {});
   }, []);
 
   function startPolling(id: string) {
@@ -80,9 +96,18 @@ export default function Home() {
           <h1 className="text-xl font-extrabold tracking-tight text-gray-900">
             MakanReel
           </h1>
-          <p className="text-xs text-gray-400">Singapore F&B · AI 短视频生成 · Phase 1</p>
+          <p className="text-xs text-gray-400">Singapore F&B · AI 短视频生成 · Phase 1 + 2.1</p>
         </div>
-        <span className="text-2xl">⚡</span>
+        {brandLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={assetUrl(brandLogo)}
+            alt="Brand"
+            className="h-8 w-auto rounded-md"
+          />
+        ) : (
+          <span className="text-2xl">⚡</span>
+        )}
       </header>
 
       {/* 内容 */}

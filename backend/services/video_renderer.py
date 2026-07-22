@@ -198,6 +198,55 @@ def _burn_hook(video_path: str, hook_text: str, hook_duration: float, out_path: 
     return out_path
 
 
+def _overlay_logo(video_path: str, position: str, out_path: str) -> str:
+    """在视频角标位置叠加半透明品牌 Logo（Phase 2.1）。
+
+    关闭条件：BRAND_LOGO_PATH 为空或文件不存在时，直接复制原视频。
+    位置由模板 logo_position 决定（top-right / bottom-right）。
+    """
+    logo_src = config.BRAND_LOGO_PATH
+    if not logo_src or not os.path.exists(logo_src):
+        shutil.copy2(video_path, out_path)
+        return out_path
+
+    W, H = config.OUTPUT_WIDTH, config.OUTPUT_HEIGHT
+    # 角标目标宽度（像素），按比例推算高度
+    target_w = int(config.BRAND_LOGO_SCALE * W)
+    try:
+        from PIL import Image
+        with Image.open(logo_src) as im:
+            iw, ih = im.size
+        target_h = int(target_w * ih / iw)
+    except Exception:
+        target_h = int(target_w * 0.5)
+
+    margin_x = int(config.BRAND_LOGO_MARGIN * W)
+    margin_y = int(config.BRAND_LOGO_MARGIN * H)
+    opacity = config.BRAND_LOGO_OPACITY
+
+    if position == "bottom-right":
+        x = W - margin_x - target_w
+        y = H - margin_y - target_h
+    else:  # top-right 默认
+        x = W - margin_x - target_w
+        y = margin_y
+
+    logo_path = logo_src.replace("\\", "/")
+    filter_complex = (
+        f"[1]scale={target_w}:{target_h}:force_original_aspect_ratio=decrease,"
+        f"format=rgba,colorchannelmixer=aa={opacity:.2f}[lg];"
+        f"[0][lg]overlay=x={x}:y={y}:format=auto"
+    )
+    cmd = [
+        FFMPEG, "-y", "-i", video_path, "-i", logo_path,
+        "-filter_complex", filter_complex,
+        "-c:a", "copy", "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
+        out_path,
+    ]
+    _run(cmd)
+    return out_path
+
+
 def make_thumbnail(video_path: str, out_path: str) -> str:
     """抽取视频第 1 秒作为缩略图。"""
     cmd = [
@@ -240,8 +289,13 @@ def render(processed_images: list[str], template: Template, out_dir: str, note: 
     _add_audio(concat_path, template, with_audio)
 
     # 4. 烧录花字
+    hooked = os.path.join(tmp_dir, "hooked.mp4")
+    _burn_hook(with_audio, template.hook_text, template.hook_duration, hooked)
+
+    # 4.5 叠加品牌角标（Phase 2.1）
     final_path = os.path.join(out_dir, "final.mp4")
-    _burn_hook(with_audio, template.hook_text, template.hook_duration, final_path)
+    pos = template.logo_position or config.BRAND_LOGO_DEFAULT_POS
+    _overlay_logo(hooked, pos, final_path)
 
     # 5. 缩略图
     thumb_path = os.path.join(out_dir, "thumb.jpg")

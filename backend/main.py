@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import config
-from routers import upload, jobs, assets, templates
+from routers import upload, jobs, assets, templates, brand
 
 
 # 注册 HEIC 支持
@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="AI 短视频内容生成 Portal API",
-    version="1.0.0",
-    description="新加坡餐饮品牌 AI 短视频生成后端 (Phase 1)",
+    version="1.1.0",
+    description="新加坡餐饮品牌 AI 短视频生成后端 (Phase 1 + Phase 2.1 品牌 Logo 挂载)",
     lifespan=lifespan,
 )
 
@@ -47,6 +47,7 @@ app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(jobs.router, prefix="/api", tags=["jobs"])
 app.include_router(assets.router, prefix="/api", tags=["assets"])
 app.include_router(templates.router, prefix="/api", tags=["templates"])
+app.include_router(brand.router, prefix="/api", tags=["brand"])
 
 
 @app.get("/")

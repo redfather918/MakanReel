@@ -40,7 +40,7 @@ export interface TemplateInfo {
   style_prompt: string;
 }
 
-function apiUrl(path: string): string {
+export function apiUrl(path: string): string {
   if (path.startsWith("http")) return path;
   return `${BASE}${path}`;
 }
